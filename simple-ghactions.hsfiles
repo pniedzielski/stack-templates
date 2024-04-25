@@ -1,0 +1,312 @@
+{-# START_FILE package.yaml #-}
+name:                {{name}}
+version:             0.1.0.0
+github:              "{{github-username}}{{^github-username}}githubuser{{/github-username}}/{{name}}"
+license:             BSD-3-Clause
+license-file:        [ LICENSE.md ]
+author:              "{{author-name}}{{^author-name}}Author name here{{/author-name}}"
+maintainer:          "{{author-name}}{{^author-name}}Author name here{{/author-name}} <{{author-email}}{{^author-email}}example@example.com{{/author-email}}>"
+copyright:           "{{copyright}}{{^copyright}}Copyright © {{year}}{{^year}}2024{{/year}} {{author-name}}{{^author-name}}Author name here{{/author-name}}{{/copyright}}"
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            {{category}}{{^category}}Web{{/category}}
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/{{github-username}}{{^github-username}}githubuser{{/github-username}}/{{name}}#readme>
+
+extra-doc-files:
+  - README.md
+  - CHANGELOG.md
+  - LICENSE.md
+
+dependencies:
+  - base >= 4.18 && < 5
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wmissing-export-lists
+  - -Wmissing-home-modules
+  - -Wpartial-fields
+  - -Wredundant-constraints
+  - -Wprepositive-qualified-module
+language: Haskell2010
+default-extensions:
+  - ImportQualifiedPost
+
+library:
+  source-dirs: src
+
+executables:
+  {{name}}-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - {{name}}
+
+tests:
+  {{name}}-test:
+    main:                Main.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - {{name}}
+    - tasty
+
+{-# START_FILE README.md #-}
+{{name}}
+===============================================================================
+
+How to build and run locally
+-------------------------------------------------------------------------------
+
+The project uses the [Haskell tool stack](https://docs.haskellstack.org/en/stable/README/).
+
+Assuming `stack` is installed in the system, the project can be build by running
+```
+stack build
+```
+To build and also run the tests, run
+```
+stack test
+```
+which is equivalent to
+```
+stack build --test
+```
+To run with test coverage
+```
+stack test --coverage
+```
+which generates a textual and HTML report.
+
+To run the executable,
+```
+stack exec {{name}}-exe
+```
+or passing arguments
+```
+stack exec {{name}}-exe -- -v doctor
+```
+
+For faster feedback loop,
+```
+stack test --fast --file-watch
+```
+To run `ghci` (with a version compatible with the resolver) run
+```
+stack ghci
+```
+For more information, refer to the `stack` official docs.
+
+{-# START_FILE LICENSE.md #-}
+BSD 3-Clause License
+===============================================================================
+
+{{copyright}}Copyright © {{^copyright}}{{year}}{{^year}}2024{{/year}} {{author-name}}{{^author-name}}Author name here{{/author-name}}{{/copyright}}.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+{-# START_FILE CHANGELOG.md #-}
+Changelog for `{{ name }}`
+===============================================================================
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to the
+[Haskell Package Versioning Policy](https://pvp.haskell.org/).
+
+Unreleased
+-------------------------------------------------------------------------------
+
+0.1.0.0 [YYYY-MM-DD]
+-------------------------------------------------------------------------------
+
+{-# START_FILE .github/dependabot.yaml #-}
+# See the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+{-# START_FILE .github/FUNDING.yml #-}
+github: pniedzielski
+
+{-# START_FILE .github/workflows/build.yml #-}
+{{=<% %>=}}
+name: Build and test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  workflow_dispatch: # enable manual execution
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        ghc: ['8.10.5', '9.0.1', '9.4.8', '9.6.4']
+        os: [ubuntu-latest]
+        resolver: [lts-22, lts-21, lts-20, lts-19, lts-18, lts-17, lts]
+
+    name: ${{ matrix.resolver }} (${{ matrix.ghc }})
+    steps:
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Restore from cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.stack
+            ~/.ghcup
+          key: ${{ runner.os }}-${{ matrix.ghc }}-stack${{ matrix.resolver }}
+
+      - name: Setup Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          enable-stack: true
+
+      - name: Versions
+        run: |
+          stack --version
+          cabal --version
+          ghc   --version
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        timeout-minutes: 15
+        run: |
+          stack build --resolver ${{ matrix.resolver }} --system-ghc --test --bench --no-run-tests --no-run-benchmarks --only-dependencies
+
+      - name: Run tests with coverage
+        timeout-minutes: 15
+        run: |
+          stack test --resolver ${{ matrix.resolver }} --system-ghc --test --coverage --fast
+
+      - name: Package list
+        run: |
+          stack --resolver ${{ matrix.resolver }} exec ghc-pkg list || true
+
+      - name: Generate coverage report
+        uses: 8c6794b6/hpc-codecov-action@v3
+        with:
+          target: stack:<%name%>-test
+          out: ./codecov.json
+          verbose: true
+
+      - name: Send coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./codecov.json
+          fail_ci_if_error: false # optional (default = false)
+          verbose: true
+<%={{ }}=%>
+
+{-# START_FILE test/Main.hs #-}
+import Test.Tasty (defaultMain, testGroup)
+
+main :: IO ()
+main = defaultMain $ testGroup "Tests"
+    [ ]
+
+{-# START_FILE src/Lib.hs #-}
+module Lib
+    ( application
+    ) where
+
+application :: IO ()
+application = putStrLn "Saluton, mondo!"
+
+{-# START_FILE app/Main.hs #-}
+module Main (main) where
+
+import Lib (application)
+
+main :: IO ()
+main = application
+
+{-# START_FILE .gitignore #-}
+# Stack
+.stack-work
+stack.yaml.lock
+.stack-work/
+.stack/
+*~
+*.swp
+*.swo
+.DS_Store
+# IDE
+.idea/
+# Aux files
+*.o
+*.hi
+*.hie
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+*.prof
+*.aux
+*.hp
+*.eventlog
+{{name}}.cabal
+hls.log
+cabal.project.local
+cabal.project.local~
+.ghc.environment.*
